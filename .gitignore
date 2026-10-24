@@ -1,0 +1,25 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Datasets and Large Artifacts
+data/raw/
+data/interim/
+data/processed/*.npz
+data/processed/*.parquet
+data/processed/commag/*.npz
+outputs/checkpoints/*.pt
+outputs/checkpoints/*.pth
+
+# IDE and OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db

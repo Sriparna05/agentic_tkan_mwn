@@ -1,0 +1,27 @@
+seed: 42
+
+data:
+  raw_dir: "data/raw/commag"
+  interim_dir: "data/interim"
+  processed_dir: "data/processed"
+
+simulation:
+  n_base_stations: 3
+  n_users: 10
+  time_steps: 100
+  bandwidth_mhz: 20.0
+  carrier_freq_ghz: 2.4
+  tx_power_dbm: 30.0
+  noise_figure_db: 7.0
+
+policies:
+  baselines:
+    - "random"
+    - "round_robin"
+    - "proportional_fair"
+    - "max_snr"
+
+outputs:
+  checkpoint_dir: "outputs/checkpoints"
+  metric_dir: "outputs/metrics"
+  figure_dir: "outputs/figures"
