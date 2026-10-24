@@ -1,0 +1,73 @@
+{
+  "protocol_version": "1.0.0",
+  "git_revision": "6df3cc067ef7a75373603dd22740360b49399c34",
+  "created_at_utc": "2026-10-24 08:16:53.758888+00:00",
+  "dataset_name": "Colosseum O-RAN COMMAG Dataset",
+  "lookback_window_steps": 16,
+  "forecast_horizon_steps": 1,
+  "sampling_interval_ms": 250.0,
+  "features": {
+    "feature_names": [
+      "dl_buffer [bytes]",
+      "tx_brate downlink [Mbps]",
+      "sum_requested_prbs",
+      "sum_granted_prbs"
+    ],
+    "target_name": "dl_buffer [bytes]",
+    "grouping_variable": "slice_id"
+  },
+  "scaler_parameters": {
+    "scaler_type": "StandardScaler",
+    "fit_partition": "train_only",
+    "feature_names": [
+      "dl_buffer [bytes]",
+      "tx_brate downlink [Mbps]",
+      "sum_requested_prbs",
+      "sum_granted_prbs"
+    ],
+    "mean": [
+      45562.4296875,
+      0.14773783087730408,
+      34.83443832397461,
+      103.42597198486328
+    ],
+    "scale_std": [
+      78750.25,
+      0.26254037022590637,
+      163.88729858398438,
+      138.70204162597656
+    ],
+    "min": [
+      0.0,
+      0.0,
+      -292.0,
+      0.0
+    ],
+    "max": [
+      184665.0,
+      3.6222100257873535,
+      2128.0,
+      1440.0
+    ]
+  },
+  "target_transform": {
+    "transform": "log1p",
+    "formula": "log(1 + y)",
+    "inverse_formula": "exp(y_pred) - 1"
+  },
+  "window_counts": {
+    "train": 737270,
+    "validation": 146977,
+    "test": 146971,
+    "out_of_distribution_test": 56843,
+    "total": 1088061
+  },
+  "audit_log": {
+    "duplicate_rows_dropped": 0,
+    "duplicate_timestamps_dropped": 0,
+    "segments_split_on_gaps": 2,
+    "excluded_short_segments": 0,
+    "total_raw_rows_read": 1097693,
+    "total_windows_generated": {}
+  }
+}

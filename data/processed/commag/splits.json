@@ -1,0 +1,135 @@
+{
+  "random_seed": 2026,
+  "protocol_version": "1.0.0",
+  "splits": {
+    "train": {
+      "num_runs": 10,
+      "total_windows": 737270,
+      "runs": [
+        {
+          "run_id": "rome_static_close/tr10/exp2",
+          "path": "slice_traffic/rome_static_close/tr10/exp2",
+          "metric_files_count": 40,
+          "total_rows_processed": 74065,
+          "total_windows_formed": 73425
+        },
+        {
+          "run_id": "rome_static_close/tr1/exp3",
+          "path": "slice_traffic/rome_static_close/tr1/exp3",
+          "metric_files_count": 40,
+          "total_rows_processed": 74317,
+          "total_windows_formed": 73677
+        },
+        {
+          "run_id": "rome_static_close/tr10/exp6",
+          "path": "slice_traffic/rome_static_close/tr10/exp6",
+          "metric_files_count": 40,
+          "total_rows_processed": 74539,
+          "total_windows_formed": 73899
+        },
+        {
+          "run_id": "rome_static_close/tr11/exp2",
+          "path": "slice_traffic/rome_static_close/tr11/exp2",
+          "metric_files_count": 40,
+          "total_rows_processed": 74197,
+          "total_windows_formed": 73557
+        },
+        {
+          "run_id": "rome_static_close/tr11/exp5",
+          "path": "slice_traffic/rome_static_close/tr11/exp5",
+          "metric_files_count": 40,
+          "total_rows_processed": 75683,
+          "total_windows_formed": 75043
+        },
+        {
+          "run_id": "rome_static_close/tr1/exp1",
+          "path": "slice_traffic/rome_static_close/tr1/exp1",
+          "metric_files_count": 40,
+          "total_rows_processed": 74344,
+          "total_windows_formed": 73704
+        },
+        {
+          "run_id": "rome_static_close/tr1/exp4",
+          "path": "slice_traffic/rome_static_close/tr1/exp4",
+          "metric_files_count": 40,
+          "total_rows_processed": 74547,
+          "total_windows_formed": 73907
+        },
+        {
+          "run_id": "rome_static_close/tr11/exp4",
+          "path": "slice_traffic/rome_static_close/tr11/exp4",
+          "metric_files_count": 40,
+          "total_rows_processed": 73831,
+          "total_windows_formed": 73191
+        },
+        {
+          "run_id": "rome_static_close/tr1/exp5",
+          "path": "slice_traffic/rome_static_close/tr1/exp5",
+          "metric_files_count": 40,
+          "total_rows_processed": 74663,
+          "total_windows_formed": 74023
+        },
+        {
+          "run_id": "rome_static_close/tr10/exp1",
+          "path": "slice_traffic/rome_static_close/tr10/exp1",
+          "metric_files_count": 40,
+          "total_rows_processed": 73484,
+          "total_windows_formed": 72844
+        }
+      ]
+    },
+    "validation": {
+      "num_runs": 2,
+      "total_windows": 146977,
+      "runs": [
+        {
+          "run_id": "rome_static_close/tr11/exp6",
+          "path": "slice_traffic/rome_static_close/tr11/exp6",
+          "metric_files_count": 40,
+          "total_rows_processed": 74358,
+          "total_windows_formed": 73718
+        },
+        {
+          "run_id": "rome_static_close/tr10/exp4",
+          "path": "slice_traffic/rome_static_close/tr10/exp4",
+          "metric_files_count": 40,
+          "total_rows_processed": 73899,
+          "total_windows_formed": 73259
+        }
+      ]
+    },
+    "test": {
+      "num_runs": 2,
+      "total_windows": 146971,
+      "runs": [
+        {
+          "run_id": "rome_static_close/tr1/exp6",
+          "path": "slice_traffic/rome_static_close/tr1/exp6",
+          "metric_files_count": 40,
+          "total_rows_processed": 74479,
+          "total_windows_formed": 73839
+        },
+        {
+          "run_id": "rome_static_close/tr11/exp3",
+          "path": "slice_traffic/rome_static_close/tr11/exp3",
+          "metric_files_count": 40,
+          "total_rows_processed": 73772,
+          "total_windows_formed": 73132
+        }
+      ]
+    },
+    "out_of_distribution_test": {
+      "num_runs": 1,
+      "total_windows": 56843,
+      "runs": [
+        {
+          "run_id": "rome_slow_close/tr6/exp2",
+          "path": "slice_traffic/rome_slow_close/tr6/exp2",
+          "metric_files_count": 40,
+          "total_rows_processed": 57515,
+          "total_windows_formed": 56843
+        }
+      ]
+    }
+  }
+}
