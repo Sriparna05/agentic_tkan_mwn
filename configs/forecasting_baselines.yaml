@@ -1,0 +1,51 @@
+# Phase 5.1 Forecasting Baselines Configuration
+protocol_version: "1.0.0"
+phase: "5.1"
+description: "Lightweight forecasting baselines for buffer occupancy prediction in Colosseum O-RAN COMMAG"
+
+target:
+  name: "dl_buffer [bytes]"
+  horizon_steps: 1
+  lookback_steps: 16
+  sampling_interval_ms: 250.0
+  transform: "log1p"
+  inverse_transform: "expm1"
+
+input_features:
+  - "dl_buffer [bytes]"
+  - "tx_brate downlink [Mbps]"
+  - "sum_requested_prbs"
+  - "sum_granted_prbs"
+
+pilot_hyperparameters:
+  random_seed: 2026
+  hidden_dimension: 32
+  recurrent_layers: 1
+  batch_size: 64
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  loss_function: "HuberLoss"
+  huber_delta: 1.0
+  max_epochs: 30
+  early_stopping_patience: 5
+  gradient_clipping: 1.0
+
+models:
+  - name: "Persistence"
+    type: "heuristic"
+    description: "Predicts t+1 buffer using buffer value at time t"
+  - name: "SmallMLP"
+    type: "neural"
+    architecture: "Linear(64, 32) -> ReLU -> Linear(32, 1)"
+  - name: "SingleLayerGRU"
+    type: "recurrent"
+    architecture: "GRU(in=4, hidden=32, layers=1) -> Linear(32, 1)"
+
+evaluation:
+  metrics:
+    - "MAE (bytes)"
+    - "RMSE (bytes)"
+  groupings:
+    - "overall"
+    - "slice_id"
+    - "held_out_recording"

@@ -1,0 +1,38 @@
+[
+  {
+    "original_path": "D:\\DSAA\\models\\kan\\vanilla_kan.py",
+    "destination_path": "src/models/kan/vanilla_kan.py",
+    "sha256": "4c0e3639f1d9a6ee108eb295ec08d819c4e0f33ec32d3a8bfd3ccb7d2337d1aa",
+    "verified_match": true
+  },
+  {
+    "original_path": "D:\\DSAA\\models\\kan\\tkan.py",
+    "destination_path": "src/models/kan/tkan.py",
+    "sha256": "0035dde8c9387ad7d91c81b539b2e066c9ddab0d8e3f748dcf15f63612291b6e",
+    "verified_match": true
+  },
+  {
+    "original_path": "D:\\DSAA\\models\\kan\\efficient_kan.py",
+    "destination_path": "src/models/kan/efficient_kan.py",
+    "sha256": "8c3b0004a037db44b76c401a212a69ec7c3995c715585ca1c3629c0bf7d016ee",
+    "verified_match": true
+  },
+  {
+    "original_path": "D:\\DSAA\\models\\deep_learning\\lstm.py",
+    "destination_path": "src/models/deep_learning/lstm.py",
+    "sha256": "ac21977ab6dc1afe79185a7133ae089b153b2d2d91c35a1509a76428735fd552",
+    "verified_match": true
+  },
+  {
+    "original_path": "D:\\DSAA\\models\\deep_learning\\gru.py",
+    "destination_path": "src/models/deep_learning/gru.py",
+    "sha256": "3667436c37b215e961307ed3085f7a170d4f52db658932b39ca0a7aece224912",
+    "verified_match": true
+  },
+  {
+    "original_path": "D:\\DSAA\\models\\agentic_kan\\tkan_agentic.py",
+    "destination_path": "src/models/agentic_kan/tkan_agentic.py",
+    "sha256": "d0c2364e5344b4f2460be985ddaec1b03e15f4366d21c0967529136f0a0e61aa",
+    "verified_match": true
+  }
+]
