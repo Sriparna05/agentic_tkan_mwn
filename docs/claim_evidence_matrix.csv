@@ -1,0 +1,24 @@
+Claim_ID,Manuscript_Section,Manuscript_Claim,Evidence_Source_File,Raw_Value_or_Evidence,Verification_Status,Required_Action
+C-01,Abstract,"Agentic TKAN achieves 32.6% reward gain over matched recurrent (GRU) controller",outputs/metrics/final_results.csv,"TKAN: -6940.7, GRU: -9201.4. (|9201.4 - 6940.7| / 6940.7 = 32.57%)",Partially verified,"Provide explicit percentage formula in text; note it is 24.6% relative to GRU baseline"
+C-02,Abstract,"26.4% reduction in buffer overflow frequency over GRU",outputs/metrics/final_results.csv,"TKAN: 13.1%, GRU: 17.8%. (17.8 - 13.1)/17.8 = 26.40%",Verified,None. Exact match
+C-03,Abstract,"Outperforms feedforward MLPs by 201.7%",outputs/metrics/final_results.csv,"TKAN: -6940.7, MLP: -20942.3. (|20942.3 - 6940.7| / 6940.7 = 201.73%)",Partially verified,"Clarify formula; note 66.9% relative to MLP baseline"
+C-04,Abstract,"VoI acquisition rule achieves superior QoS compliance using only 2.0% telemetry polling",outputs/metrics/final_results.csv,"Mean telemetry requests = 6.0 out of 300 possible (2.00%)",Verified,None. Exact match
+C-05,Abstract,"Cutting communication overhead by 92.7% to 98.0% compared to periodic/continuous schemes",outputs/metrics/final_results.csv,"TKAN VoI: 6.0 reqs vs Periodic P4 (75 reqs -> 92.0%) and Always (300 reqs -> 98.0%)",Partially verified,"Correct lower bound from 92.7% to 92.0% (vs Periodic P4) or 96.0% (vs Periodic P2)"
+C-06,Abstract,"Strict Service Level Agreements (SLAs)",outputs/metrics/final_results.csv,"TKAN VoI SLA violation rate = 42.50%",Contradicted,"Soften claim: rephrase 'strict SLA compliance' to 'SLA breach mitigation under sparse telemetry'"
+C-07,Section 1,"TKAN replaces fixed node activations with learnable B-splines",src/models/kan/tkan.py,"TKAN implementation uses cubic B-splines on edges",Verified,None
+C-08,Section 1,"Compact TKAN (4,409 parameters)",outputs/checkpoints/tkan_best.pt,"Sum of parameters in tkan_best.pt = 3,929",Contradicted,Update parameter count from 4409 to 3929 in text and manifest
+C-09,Section 1,"Evaluated across 10 held-out seeds and 170 evaluation episodes",outputs/metrics/final_experiments_raw.csv,"17 policies * 10 seeds [2026..2035] = 170 episodes",Verified,None
+C-10,Section 3,"Total downlink PRB capacity = 15; R_{k,t} >= 1",src/mwnsim/environment.py,"Config prb_budget: total=15, min=[1,1,1]",Verified,None
+C-11,Section 3,"Time slotted with duration T_{slot} = 250 ms",src/mwnsim/environment.py,"Config step_duration_ms: 250.0",Verified,None
+C-12,Section 3,"Telemetry delivery delay d_k and loss rate p_{loss,k}",src/mwnsim/environment.py,"delays=[1,1,2], loss=[0.05, 0.02, 0.10]",Verified,None
+C-13,Section 4,"Temporal lookback buffer H = 16",src/mwnsim/agentic_controller.py,"lookback = 16",Verified,None
+C-14,Section 4,"Hamilton Largest-Remainder integer apportionment",src/mwnsim/policies.py,"allocate_integer_prbs implements Hamilton method",Verified,None
+C-15,Section 5,"Colosseum O-RAN COMMAG dataset with anti-leakage boundaries",data/processed/commag/manifest.json,"Scaler fitted on train_only; 737k train, 147k val windows",Verified,None
+C-16,Section 5,"COMMAG traces do not reveal counterfactual outcomes",paper/main.tex line 142,"Stated in Section 5.1 and simulator methodology",Verified,None
+C-17,Section 6,"PrivilegedFullInfo_Oracle achieves -1062.7 +/- 1131.9 reward",outputs/metrics/final_results.csv,"Mean = -1062.67, CI95 = 1131.87",Verified,None
+C-18,Section 6,"AgenticTKAN_Never achieves -425.4 +/- 555.6 reward",outputs/metrics/final_results.csv,"Mean = -425.42, CI95 = 555.60",Verified,"Explain why open-loop static allocation gets higher reward but fails under bursts (Fig 4c, 5)"
+C-19,Section 6,"NoMemory_VoI achieves -547.2 +/- 422.1 reward",outputs/metrics/final_results.csv,"Mean = -547.25, CI95 = 422.10",Verified,"Clarify that NoMemory incurs 54.7% more overflow bytes (160k B vs 103k B) and 3x more telemetry"
+C-20,Section 6,"TKAN decision latency = 168.90 ms",outputs/metrics/final_results.csv,"Mean decision latency = 168.90 ms",Verified,None
+C-21,Section 7,"Controller is hybrid (supervised predictor + VoI rule), not RL",src/mwnsim/agentic_controller.py,"Supervised checkpoint loaded; deterministic VoI thresholding",Verified,None
+C-22,Section 7,"TKAN latency exceeds strict 10 ms Near-RT RIC envelope",src/mwnsim/agentic_controller.py,"168 ms in PyTorch GPU; C++ TensorRT compilation required",Verified,None
+C-23,Appendix,"Sequence length W = 10 at 10 ms TTI; Seeds [42, 101, ...]",paper/reproducibility_appendix.md,"Actual code uses H=16 at 250 ms slot; Seeds [2026..2035]",Contradicted,Align reproducibility appendix with actual pipeline parameters
