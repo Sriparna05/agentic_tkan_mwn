@@ -1,0 +1,76 @@
+# configs/simulator.yaml
+# Phase 6.1 — Closed-Loop Wireless Slice Simulator Configuration
+# Deterministic-by-seed research simulator for 3 O-RAN slices
+
+protocol_version: "1.0.0"
+phase: "6.1"
+description: "Discrete-time closed-loop simulator for joint telemetry acquisition and PRB allocation across 3 O-RAN slices"
+
+time:
+  step_duration_ms: 250.0  # Native sampling step matching COMMAG dataset
+  max_steps: 100           # Episode length (25.0 seconds per episode)
+  random_seed: 2026        # Reproducibility seed
+
+prb_budget:
+  total_prbs: 15           # Total integer PRBs available at base station
+  num_slices: 3            # Slice 0: eMBB, Slice 1: URLLC, Slice 2: MIoT
+  min_prbs_per_slice: [1, 1, 1]  # Minimum PRBs guaranteed per slice (feasible budget partition = 12)
+
+slices:
+  - id: 0
+    name: "eMBB"
+    description: "Enhanced Mobile Broadband (high throughput, large bursty buffers)"
+    queue_capacity_bytes: 200000.0   # Finite buffer limit (200 KB)
+    arrival_mean_bytes: 45000.0      # Average arrival per 250ms (illustrative, ~1.44 Mbps)
+    arrival_std_bytes: 15000.0       # Gaussian arrival jitter
+    service_efficiency_bytes_per_prb: 4000.0  # Mean channel efficiency (bytes per PRB per 250ms)
+    telemetry_delay_steps: 1         # 1-step delivery delay (250 ms)
+    telemetry_loss_rate: 0.05        # 5% probability of telemetry packet drop
+    sla_latency_bound_steps: 4.0     # Max tolerable dwell time (1000 ms)
+    sla_min_throughput_bytes: 20000.0 # Min required throughput per step
+    weights:
+      queue_cost: 1.0
+      overflow_cost: 10.0
+      latency_violation_cost: 5.0
+      telemetry_cost: 0.5            # Overhead of E2 measurement report
+
+  - id: 1
+    name: "URLLC"
+    description: "Ultra-Reliable Low-Latency Communication (low buffer, strict delay constraints)"
+    queue_capacity_bytes: 20000.0    # 20 KB buffer
+    arrival_mean_bytes: 3000.0       # ~96 kbps
+    arrival_std_bytes: 1000.0
+    service_efficiency_bytes_per_prb: 2500.0
+    telemetry_delay_steps: 1         # Fast telemetry path
+    telemetry_loss_rate: 0.02        # 2% loss
+    sla_latency_bound_steps: 1.5     # Strict dwell time limit (375 ms)
+    sla_min_throughput_bytes: 2500.0
+    weights:
+      queue_cost: 2.0
+      overflow_cost: 50.0            # Very high penalty for packet drop
+      latency_violation_cost: 25.0   # High penalty for delay SLA breach
+      telemetry_cost: 0.5
+
+  - id: 2
+    name: "MIoT"
+    description: "Massive IoT (periodic low-rate telemetry, delay tolerant)"
+    queue_capacity_bytes: 10000.0    # 10 KB buffer
+    arrival_mean_bytes: 800.0        # ~25.6 kbps
+    arrival_std_bytes: 300.0
+    service_efficiency_bytes_per_prb: 1500.0
+    telemetry_delay_steps: 2         # Higher reporting delay (500 ms)
+    telemetry_loss_rate: 0.10        # 10% loss
+    sla_latency_bound_steps: 8.0     # Delay tolerant (2000 ms)
+    sla_min_throughput_bytes: 600.0
+    weights:
+      queue_cost: 0.5
+      overflow_cost: 15.0
+      latency_violation_cost: 2.0
+      telemetry_cost: 0.2
+
+reward_coefficients:
+  queue_weight: 0.01          # Normalizer for queue cost
+  overflow_weight: 1.0        # Weight for overflow violations
+  sla_violation_weight: 2.0   # Weight for SLA constraint violations
+  telemetry_weight: 0.1       # Weight for telemetry reporting cost
+  switch_weight: 0.05         # Weight for allocation switching cost: gamma * sum |R_t - R_{t-1}|

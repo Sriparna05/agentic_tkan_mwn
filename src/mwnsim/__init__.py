@@ -1,8 +1,10 @@
 """
-MWNSim: Mobile Wireless Network Simulation Package
+MWNSim: Mobile Wireless Network Simulation Package for O-RAN Slicing & Telemetry
 """
 
-from .environment import MobileWirelessEnv
-from .policies import get_policy, BasePolicy
+from .environment import WirelessSlicingEnv
 
-__all__ = ["MobileWirelessEnv", "get_policy", "BasePolicy"]
+# Backward-compatible alias
+MobileWirelessEnv = WirelessSlicingEnv
+
+__all__ = ["WirelessSlicingEnv", "MobileWirelessEnv"]
