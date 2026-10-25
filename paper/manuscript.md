@@ -9,7 +9,7 @@
 
 ## Abstract
 
-Open Radio Access Network (O-RAN) slicing requires dynamic Physical Resource Block (PRB) allocation under strict Service Level Agreements (SLAs) for heterogeneous traffic classes (eMBB, URLLC, and MIoT). However, near-real-time slicing controllers face an operational telemetry dilemma: high-frequency E2 telemetry polling incurs severe transport and processing overhead, whereas coarse or stale telemetry degrades downstream slicing decisions, causing buffer overflow and delay SLA violations. In this paper, we propose an **Agentic Temporal Kolmogorov-Arnold Network (Agentic TKAN)** closed-loop controller that jointly optimizes telemetry acquisition and PRB slicing. The controller leverages non-linear learnable B-spline activation functions to maintain multi-step temporal representations from sparse observations, evaluates an explicit Value-of-Information (VoI) acquisition rule that balances downstream decision risk against telemetry reporting cost, and executes integer PRB allocations via the Largest-Remainder (Hamilton) apportionment method. Evaluated across 10 independent held-out seeds against 16 baselines and ablations calibrated on real O-RAN COMMAG traces, the proposed Agentic TKAN achieves a **32.6% reward gain** and a **26.4% reduction in buffer overflow frequency** over a matched recurrent (GRU) controller, while outperforming feedforward MLPs by **201.7%**. Furthermore, the VoI acquisition rule achieves superior QoS compliance using only **2.0% telemetry polling**, cutting communication overhead by **92.7% to 98.0%** compared to standard periodic and continuous reporting schemes.
+Open Radio Access Network (O-RAN) slicing requires dynamic Physical Resource Block (PRB) allocation under Quality of Service (QoS) constraints for heterogeneous traffic classes (eMBB, URLLC, and MIoT). However, near-real-time slicing controllers face an operational telemetry dilemma: high-frequency E2 telemetry polling incurs severe transport and processing overhead, whereas coarse or stale telemetry degrades downstream slicing decisions, causing buffer overflow and delay SLA violations. In this paper, we propose an **Agentic Temporal Kolmogorov-Arnold Network (Agentic TKAN)** closed-loop controller that jointly optimizes telemetry acquisition and PRB slicing. The controller leverages non-linear learnable B-spline activation functions to maintain multi-step temporal representations from sparse observations, evaluates an explicit Value-of-Information (VoI) acquisition rule that balances downstream decision risk against telemetry reporting cost, and executes integer PRB allocations via the Largest-Remainder (Hamilton) apportionment method. Evaluated across 10 independent held-out seeds against 16 baselines and ablations calibrated on real O-RAN COMMAG traces, the proposed Agentic TKAN achieves a **24.6% baseline-relative penalty reduction** and a **26.4% reduction in buffer overflow frequency** over a matched recurrent (GRU) controller, while reducing penalties by **66.9%** over feedforward MLPs. Furthermore, the VoI acquisition rule achieves a favorable control QoS trade-off using only **2.0% telemetry polling**, cutting telemetry communication overhead by **92.0% to 98.0%** compared to standard periodic and continuous reporting schemes.
 
 **Keywords:** O-RAN, Network Slicing, Kolmogorov-Arnold Networks (KAN), Telemetry Acquisition, Value of Information, Resource Allocation.
 
@@ -28,7 +28,7 @@ To address these limitations, we propose the **Agentic Temporal Kolmogorov-Arnol
 ### Main Contributions
 1. **Joint Telemetry and Slicing Formulation:** We formulate closed-loop RAN slicing under strict information barriers, where telemetry is subject to non-zero delivery delay ($d_k$) and Bernoulli report loss ($p_{\text{loss}, k}$).
 2. **Explicit VoI Telemetry Rule:** Rather than relying on ungrounded model uncertainty, we derive an explicit VoI rule that triggers E2 telemetry only when expected downstream buffer overflow or delay SLA risk exceeds reporting cost.
-3. **Piecewise Polynomial Temporal Memory:** We deploy a compact TKAN (4,409 parameters) to maintain multi-step temporal representations, proving resilient to measurement staleness.
+3. **Piecewise Polynomial Temporal Memory:** We deploy a compact TKAN (3,929 parameters) to maintain multi-step temporal representations, proving resilient to measurement staleness.
 4. **Controlled Reproducible Evaluation:** Using 10 held-out seeds and 170 evaluation episodes calibrated on Colosseum O-RAN COMMAG recordings, we validate that TKAN outperforms matched GRU and MLP baselines while reducing telemetry by over 92%.
 
 ---
@@ -79,7 +79,7 @@ $$\mathcal{R} = \sum_{t=0}^{N-1} \left( -w_Q C_{Q, t} - w_O C_{O, t} - w_L C_{L,
 where:
 - $C_{Q, t} = \sum_k w_{Q, k} \frac{Q_{k, t}}{C_k}$ is normalized queue backlog penalty.
 - $C_{O, t} = \sum_k w_{O, k} \frac{O_{k, t}}{C_k}$ is buffer overflow penalty.
-- $C_{L, t} = \sum_k w_{L, k} \max\left(0, \frac{Q_{k, t}}{R_{k, t} \bar{\mu}_k} - D_{\max, k}\right)$ is delay SLA violation penalty ($D_{\max, k}$ is the latency target).
+- $C_{L, t} = \sum_k w_{L, k} \max\left(0, \frac{Q_{k, t}}{R_{k, t} \bar{\mu}_k} - D_{\max, k}\right)$ is the queue dwell-time SLA penalty ($D_{\max, k}$ is the target buffer drainage duration in simulator steps, serving as a dwell-time proxy rather than physical packet latency).
 - $C_{\text{tel}, t} = \sum_k c_{\text{tel}, k} m_{k, t}$ is telemetry communication overhead.
 - $C_{\text{sw}, t} = \sum_k |R_{k, t} - R_{k, t-1}|$ is PRB reconfiguration switching cost.
 
@@ -160,16 +160,14 @@ We benchmark 17 distinct policies:
 - **Architecture Ablations:** `AgenticGRU_VoI` (GRU recurrent predictor), `AgenticMLP_VoI` (feedforward MLP predictor), and `NoMemory_VoI` (myopic persistence).
 - **Telemetry Ablations:** `AgenticTKAN_PeriodicP2` ($P=2$), `PeriodicP4` ($P=4$), `AgeT3` ($T=3$), `UncertaintyTh0.15` ($\theta=0.15$), `Always` (100% polling), and `Never` (open-loop).
 - **Baseline Control Policies:** `EqualAllocation` (static equal PRBs, no telemetry), `EqualPeriodic_P2`, `QueueAwarePeriodic_P2`, `QueueAwareAge_T3`, `QueueAwareUncertainty`, and `DecisionSensitive`.
-- **Privileged Reference:** `PrivilegedFullInfo_Oracle` (accesses true hidden queues directly; 0 telemetry).
-
-### 5.3 Statistical Protocol
-All policies are evaluated over 10 independent held-out seeds: `[2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035]`. Tuning seeds (`[101, ..., 105]`) were strictly segregated. We report mean, sample standard deviation, and Student's t 95% confidence intervals ($N=10$).
+- **Privileged Reference:** `PrivilegedFullInfo_Oracle` (accesses true hidden queues directly; 0 telemetr### 5.3 Statistical Protocol
+All policies are evaluated over 10 independent held-out seeds: `[2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035]`. Tuning seeds (`[101, ..., 105]`) were strictly segregated. We report the sample mean and the two-sided 95% Student's $t$ confidence interval half-width ($N=10$, $t_{\text{crit}} = 2.2622$). For reference, the sample standard deviation for `AgenticTKAN_VoI` total reward is $s = 2961.4$ ($\text{SEM} = 936.5$).
 
 ---
 
 ## 6. Results and Statistical Analysis
 
-### Table 1: Comparative Benchmarking Results across 10 Held-Out Seeds (Mean ± 95% Confidence Interval)
+### Table 1: Comparative Benchmarking Results across 10 Held-Out Seeds (Sample Mean ± 95% Student's t Confidence Interval Half-Width)
 
 | Policy Name | Privileged? | Total Reward | Mean Queue (B) | Overflow Freq (%) | SLA Breach (%) | Jain Fairness | Tel. Requests | Tel. Rate (%) | Latency (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -193,38 +191,48 @@ All policies are evaluated over 10 independent held-out seeds: `[2026, 2027, 202
 
 ---
 
-### 6.1 Pareto Optimality: Telemetry Overhead vs. QoS Compliance
+### 6.1 Trade-Off Analysis: Control Quality vs. Execution Latency
 
-![Pareto Trade-off](outputs/figures/fig1_pareto_constraint_vs_telemetry.png)
-*Fig. 1: Pareto trade-off between SLA breach rate and telemetry request rate across evaluated policies. `AgenticTKAN_VoI` achieves high compliance with only 2.0% telemetry overhead.*
+![Trade-off Curve](outputs/figures/fig1_pareto_constraint_vs_telemetry.png)
+*Fig. 1: Trade-off between SLA breach rate and telemetry request rate across evaluated policies. `AgenticTKAN_VoI` establishes an efficient operating point with only 2.0% telemetry overhead.*
 
 Static equal allocation policies (`EqualAllocation` and `EqualPeriodic_P2`) fail catastrophically, suffering 87.5% to 89.5% overflow rates and over 97% SLA breaches.
 
-Among neural controllers, `AgenticTKAN_VoI` establishes an exceptional Pareto-efficient operating point: requesting telemetry only 6.0 times per 100-step episode (2.0% polling rate), it restricts SLA violations to 42.5% and buffer overflows to 13.1%. In contrast, coarse periodic polling (`AgenticTKAN_PeriodicP4`, 25% polling) experiences a 79.0% SLA breach rate, demonstrating that arbitrary periodic sampling blinds controllers during sudden inter-sample bursts.
+Among neural closed-loop controllers, `AgenticTKAN_VoI` establishes an efficient control trade-off: requesting telemetry only 6.0 times per 100-step episode (2.0% polling rate), it restricts SLA violations to 42.5% and buffer overflows to 13.1%, outperforming `AgenticGRU_VoI` (17.8% overflows) and `AgenticMLP_VoI` (29.6% overflows). However, this control quality involves a computational trade-off: uncompiled TKAN spline evaluations execute in $168.90\text{ ms}$, whereas GRU ($3.61\text{ ms}$) and MLP ($2.24\text{ ms}$) execute significantly faster.
 
 ---
 
-### 6.2 Model Architecture Ablation
+### 6.2 Analysis of Baseline Cost Asymmetries
+
+In Table 1, myopic heuristics (`NoMemory_VoI`) and static open-loop allocation (`AgenticTKAN_Never`) achieve less negative composite rewards ($-547.2$ and $-425.4$) under stationary traffic. A granular inspection of reward components reveals that 99.7% of `AgenticTKAN_VoI`'s penalty arises from the dwell-time penalty ($C_{L, t}$), which carries a disproportionate simulator weight ($w_{\text{sla}} = 50.0$) on URLLC.
+
+These baselines allocate $\sim 2.0$~PRBs to Slice 1, largely avoiding URLLC dwell-time costs, but causing severe eMBB buffer starvation:
+- `NoMemory_VoI` suffers **$160,663$~Bytes of buffer overflow** (54.7% higher than `AgenticTKAN_VoI`'s $103,886$~Bytes) and demands $3\times$ higher telemetry overhead ($18.3$ vs.\ $6.0$ requests). Although its overflow frequency is lower ($9.1\%$ vs $13.1\%$), its overflows are severe bursts averaging **$17,655\text{ Bytes/overflow step}$** compared to **$7,930\text{ Bytes/step}$** for TKAN.
+- `AgenticTKAN_Never` is an open-loop static allocation ($[12, 2, 1]$) that happens to match nominal arrival averages. As demonstrated in our sensitivity sweeps (Fig. 4c) and blackout recovery analysis (Fig. 5), open-loop allocations fail catastrophically during traffic bursts and telemetry blackouts, whereas `AgenticTKAN_VoI` rapidly stabilizes backlogs upon link restoration.
+
+---
+
+### 6.3 Model Architecture Ablation and Statistical Significance
 
 ![Architecture Ablation](outputs/figures/fig2_architecture_ablation.png)
 *Fig. 2: Neural architecture ablation under matched VoI acquisition: (a) Cumulative control reward; (b) Constraint breach frequencies. Error bars depict 95% confidence intervals.*
 
-Fig. 2 highlights the contribution of B-spline non-linear feature representation:
-- **TKAN vs. GRU:** Under identical VoI acquisition logic, TKAN achieves a reward of $-6940.7 \pm 2118.5$ compared to $-9201.4 \pm 5498.8$ for GRU (**32.6% improvement**). TKAN cuts overflow frequency from 17.8% down to 13.1% (**26.4% relative reduction**). The B-splines capture high-order queue transients without saturating recurrent gate activations.
-- **TKAN vs. MLP:** Feedforward MLP lacks temporal recurrent context. Under delayed feedback, it outputs out-of-distribution queue estimates, causing erratic allocations, severe overflows (29.6%), and a **201.7% reward degradation**.
+Fig. 2 highlights the contribution of B-spline non-linear feature representation. We quantify baseline-relative penalty reductions via $\frac{|\mathcal{R}_{\text{base}}| - |\mathcal{R}_{\text{TKAN}}|}{|\mathcal{R}_{\text{base}}|} \times 100\%$:
+- **TKAN vs. GRU:** TKAN achieves a mean penalty reduction of **24.6%** (reward $-6940.7 \pm 2118.5$ vs $-9201.4 \pm 5498.8$, or 32.6% when normalized to TKAN) and cuts overflow frequency from 17.8% down to 13.1% (**26.4% relative reduction**). Paired Student's $t$-testing across the 10 matched seeds yields a mean difference of $\Delta = +2260.8$ ($t = 1.000, p = 0.343$, Wilcoxon $p = 1.000$); thus, while directionally superior across all control metrics, the reward gain over GRU is not statistically significant at $\alpha = 0.05$.
+- **TKAN vs. MLP:** Feedforward MLP lacks temporal recurrent context, causing erratic allocations, severe overflows (29.6%), and a **66.9% penalty increase** (201.7% normalized to TKAN). This difference is statistically significant ($t = 3.745, p = 0.0046 < 0.01$, Wilcoxon $p = 0.0137$).
 
 ---
 
-### 6.3 Telemetry Acquisition Strategy Ablation
+### 6.4 Telemetry Acquisition Strategy Ablation
 
 ![Telemetry Policy Ablation](outputs/figures/fig3_telemetry_ablation.png)
 *Fig. 3: Telemetry acquisition policy ablation under TKAN predictor: Telemetry request volume vs. downstream SLA violation rate.*
 
-Fig. 3 compares telemetry modes under the fixed TKAN predictor. Fixed periodic polling (`PeriodicP2`) consumes 150 requests (reward $-13869.4$), while full polling (`Always`) consumes 300 requests (reward $-19367.3$). The explicit VoI rule cuts telemetry overhead by **96.0% and 98.0% respectively**, while yielding superior reward by selectively triggering reports only when queue backlog approaches buffer limits ($C_k$) or delay deadlines ($D_{\max, k}$).
+Fig. 3 compares telemetry modes under the fixed TKAN predictor. Fixed periodic polling (`PeriodicP2`) consumes 150 requests (reward $-13869.4$), while full polling (`Always`) consumes 300 requests (reward $-19367.3$). The explicit VoI rule cuts telemetry overhead by **96.0% and 98.0% respectively**, while yielding superior reward by selectively triggering reports only when queue backlog approaches buffer limits ($C_k$) or dwell-time targets ($D_{\max, k}$). Paired hypothesis testing confirms that TKAN's reward gain over `PeriodicP2` ($p = 0.0045$), `PeriodicP4` ($p = 0.0017$), and `Always` ($p = 0.0064$) is statistically significant at $\alpha = 0.01$.
 
 ---
 
-### 6.4 Sensitivity and Outage Recovery Analysis
+### 6.5 Sensitivity and Outage Recovery Analysis
 
 ![Sensitivity Analysis](outputs/figures/fig4_sensitivity_sweeps.png)
 *Fig. 4: Four-panel sensitivity analysis: (a) Delivery delay; (b) Packet loss rate; (c) Traffic burst multiplier; (d) VoI decision threshold tuning.*
@@ -241,15 +249,15 @@ Fig. 4 and Fig. 5 illustrate sensitivity across operational parameters:
 
 ## 7. Limitations and Threats to Validity
 
-1. **Hybrid vs. Reinforcement Learning:** The controller uses a supervised neural predictor coupled with a mathematical VoI decision rule. It is not an RL policy trained against reward gradients. Notice that myopic heuristics (`NoMemory_VoI`) achieve competitive rewards because they exhibit fewer PRB switching penalties. Future work will apply PPO fine-tuning directly on TKAN latent embeddings.
-2. **Discrete-Time Simulator vs. Full PHY/MAC:** To ensure transparency and reproducible seed control, queue dynamics were modeled at the slot level ($250\text{ ms}$). Packet-level scheduling, HARQ retransmissions, and beamforming were not simulated.
-3. **Near-RT RIC Latency Envelope:** While GRU and MLP execute in $2.2$–$3.6\text{ ms}$, TKAN's spline evaluations currently require $\sim 160\text{ ms}$ on GPU in Python/PyTorch. C++ TensorRT compilation is required to satisfy the strict 10 ms Near-RT RIC envelope.
+1. **Hybrid vs. Reinforcement Learning:** The controller uses a supervised neural predictor coupled with a mathematical VoI decision rule. It is not an RL policy trained against reward gradients. Notice that myopic heuristics achieve competitive rewards by allocating excess PRBs to URLLC; future work will apply constrained RL fine-tuning directly on TKAN latent embeddings.
+2. **Discrete-Time Simulator vs. Full PHY/MAC:** Queue dynamics were modeled at the slot level ($250\text{ ms}$). Latency metrics represent queue dwell-time proxies in simulator steps rather than physical packet delay distributions, HARQ retransmissions, or beamforming.
+3. **Near-RT RIC Latency Envelope:** While GRU and MLP execute in $2.2$–$3.6\text{ ms}$, TKAN's spline evaluations currently require $\sim 168.9\text{ ms}$ on GPU in Python/PyTorch. C++ TensorRT compilation is required to satisfy the strict 10 ms Near-RT RIC envelope.
 
 ---
 
 ## 8. Conclusion
 
-This paper presented the Agentic Temporal Kolmogorov-Arnold Network (Agentic TKAN) controller for joint telemetry acquisition and QoS-constrained RAN slicing. By combining B-spline temporal forecasting, an explicit decision-sensitive Value-of-Information (VoI) acquisition rule, and Largest-Remainder PRB apportionment, the controller solves the E2 telemetry dilemma. Across 10 held-out evaluation seeds calibrated on real O-RAN COMMAG traces, Agentic TKAN achieves a 32.6% reward gain over GRUs, a 201.7% gain over MLPs, and cuts telemetry communication overhead by over 92% compared to standard periodic reporting.
+This paper presented the Agentic Temporal Kolmogorov-Arnold Network (Agentic TKAN) controller for joint telemetry acquisition and QoS-constrained RAN slicing. By combining B-spline temporal forecasting, an explicit decision-sensitive Value-of-Information (VoI) acquisition rule, and Largest-Remainder PRB apportionment, the controller solves the E2 telemetry dilemma. Across 10 held-out evaluation seeds calibrated on real O-RAN COMMAG traces, Agentic TKAN achieves a 24.6% baseline-relative penalty reduction over GRUs, a 66.9% reduction over MLPs, and cuts telemetry communication overhead by over 92% compared to standard periodic reporting.
 
 ---
 

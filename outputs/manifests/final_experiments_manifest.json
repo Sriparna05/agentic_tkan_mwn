@@ -22,7 +22,7 @@
   "command": "python scripts/run_final_experiments.py",
   "models": {
     "TKAN": {
-      "parameters": 4409,
+      "parameters": 3929,
       "checkpoint": "outputs/checkpoints/tkan_best.pt"
     },
     "GRU": {

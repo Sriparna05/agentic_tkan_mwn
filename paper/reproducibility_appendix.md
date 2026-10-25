@@ -51,9 +51,10 @@ All benchmark simulations, predictor training, and closed-loop control evaluatio
 
 ### 3.2 Feature Preprocessing & Leakage Elimination
 * Input feature vector for each slice $k$ at step $t$:
-  $$\mathbf{x}_k(t) = \left[ \widehat{Q}_k(t), \Delta_k(t), R_k(t-1), \bar{\mu}_k(t) \right]^\top$$
-* **Window Size:** Temporal sequence length $W = 10$ steps (corresponding to $100\text{ ms}$ at $10\text{ ms}$ TTI).
-* **Normalization:** Standard zero-mean, unit-variance scaling computed strictly on the training partition ($t \in [0, 30\,000]$) and applied out-of-sample to validation ($[30\,000, 40\,000]$) and held-out test sets ($[40\,000, 50\,000]$). No future labels or cross-partition statistics leak into the feature pipeline.
+  $$\mathbf{x}_k(t) = \left[ \text{dl\_buffer [bytes]}, \text{tx\_brate [Mbps]}, \text{sum\_requested\_prbs}, \text{sum\_granted\_prbs} \right]^\top$$
+* **Window Size:** Temporal sequence length $H = 16$ steps (corresponding to $4000\text{ ms}$ context at $250\text{ ms}$ slot duration).
+* **Partition Independence:** Partitioning is performed strictly at the physical experiment run level before windowing (10 train runs, 2 validation runs, 2 test runs, and 1 out-of-distribution test run), generating $1,088,061$ total windows. Because windows are formed strictly within contiguous segments of individual runs, overlapping windows cannot cross split boundaries.
+* **Normalization:** Standard zero-mean, unit-variance scaling computed strictly on the training partition ($737,270$ windows) and applied out-of-sample without leakage.
 
 ---
 
@@ -62,38 +63,48 @@ All benchmark simulations, predictor training, and closed-loop control evaluatio
 ### 4.1 Temporal Kolmogorov-Arnold Network (TKAN)
 * **Basis Functions:** Cubic B-splines ($k=3$).
 * **Grid Intervals:** $G = 5$ equidistant points spanning normalized feature range $[-2.0, +2.0]$.
-* **Network Dimensions:** Input $d_{\text{in}} = 4$, Hidden $d_h = [64, 32]$, Output $d_{\text{out}} = 1$ (predicted queue demand $\widetilde{Q}_k(t+1)$).
-* **Recurrent Gating:** Gated recurrent cell with spline-transformed candidate states and forget/update gates.
+* **Network Dimensions:** Input $d_{\text{in}} = 4$, Hidden $d_h = 32$, Output $d_{\text{out}} = 1$ (predicted queue demand $\widetilde{Q}_k(t+1)$).
+* **Evaluated Parameters:** **3,929 trainable parameters** in checkpoint `tkan_best.pt`.
+* **Recurrent Gating:** Gated recurrent cell with B-spline sub-layers and recurrent kernel gates.
 * **Loss Function:** Huber Loss ($\delta = 1.0$) combined with L1 spline regularization ($\lambda_{\text{reg}} = 10^{-4}$).
 * **Optimizer:** Adam with learning rate $\eta = 10^{-3}$, batch size $B = 32$, trained for 50 epochs with early stopping (patience $= 10$).
 
 ### 4.2 Matched Baselines
-To ensure rigorous and fair comparison, all baseline architectures match the parameter order of magnitude ($\sim 18\text{k} - 25\text{k}$ parameters):
-* **Agentic GRU:** 2-layer Gated Recurrent Unit, hidden dimension $d_h = 64$, followed by a linear projection layer.
-* **Agentic MLP:** 3-layer Multi-Layer Perceptron ($d_{\text{in}} \to 64 \to 32 \to 1$), LeakyReLU activations ($\alpha=0.01$).
+To ensure rigorous and fair comparison, all baseline architectures match the parameter order of magnitude ($\sim 2\text{k} - 4\text{k}$ parameters):
+* **Agentic GRU:** Single-layer Gated Recurrent Unit ($d_{\text{in}}=4, d_h=32$, linear projection to $1$), totaling **3,681 parameters** in checkpoint `singlelayergru_best.pt`.
+* **Agentic MLP:** Multi-Layer Perceptron ($16 \times 4 \to 32 \to 1$), totaling **2,113 parameters** in checkpoint `smallmlp_best.pt`.
 
 ### 4.3 Controller & Value-of-Information (VoI) Parameters
-* **Total PRB Budget:** $C = 15$ PRBs per decision epoch.
-* **VoI Loss Function Weights:**
-  * Delay / Queue penalty: $\alpha = 1.0$
-  * Overflow penalty: $\beta = 10.0$
-  * Reconfiguration penalty: $\gamma = 5.0$
-  * Measurement acquisition cost: $c_{\text{req}} = 1.0$
+* **Total PRB Budget:** $C = 15$ PRBs per decision epoch ($250\text{ ms}$ slot).
+* **Simulator Reward Penalty Weights:**
+  * Queue cost weight: $w_Q = 0.01$
+  * Overflow penalty weight: $w_{\text{ovf}} = 1.0$
+  * Global SLA penalty weight: $w_{\text{sla}} = 2.0$ (URLLC slice latency weight: $w_{\text{latency}, 1} = 25.0 \implies$ effective weight $50.0$)
+  * Telemetry signaling cost: $w_{\text{tel}} = 0.1$
+  * PRB reconfiguration switching cost: $w_{\text{sw}} = 0.05$
 * **Non-Ideal E2 Channel Settings:**
-  * Signaling delay: $d_k \sim \text{Poisson}(1.5)$ decision intervals.
-  * Report drop rate: $p_{\text{loss}, k} = 5\%$.
+  * Signaling delay: $d_k \in \{1, 1, 2\}$ decision intervals.
+  * Report drop rate: $p_{\text{loss}, k} \in \{0.05, 0.02, 0.10\}$.
 * **Fairness & Feasibility Guarantee:**
   * Largest-Remainder Hamilton integer apportionment ensuring $\sum_{k=1}^3 R_k(t) = 15$ and $R_k(t) \ge R_{\min} = 1, \forall k$.
 
 ---
 
-## 5. Seed Allocation Protocol
+## 5. Seed Allocation and Statistical Testing Protocol
 
 To guarantee no post-hoc tuning on evaluation sets, random seeds were segregated into two strict cohorts prior to running experiments:
-* **Tuning Cohort (Validation):** Seeds 100, 102, 104, 106, 108.
+* **Tuning Cohort (Validation):** Seeds 101, 102, 103, 104, 105.
 * **Held-Out Evaluation Cohort (Final Reporting):** 10 independent random seeds:
-  `[42, 101, 202, 303, 404, 505, 606, 707, 808, 909]`
-* All tables and figures report the sample mean $\pm$ 95% Student-$t$ confidence intervals across these 10 held-out seeds.
+  `[2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035]`
+* **Statistical Uncertainty Reporting:**
+  * All reported uncertainty intervals ($\pm$) in Table 1 represent the **two-sided 95% Student's $t$ confidence interval half-width** ($t_{\text{crit}} \times \text{SEM}$ where $t_{\text{crit}} = 2.2622$ for $N=10$).
+  * For reference, the sample standard deviation for `AgenticTKAN_VoI` total reward is $s = 2961.4$ ($\text{SEM} = 936.5$, $95\%\text{ CI} = \pm 2118.5$).
+* **Paired Difference Hypothesis Testing ($N=10$ matched seeds):**
+  * `AgenticTKAN_VoI` vs `AgenticGRU_VoI`: Mean paired difference $\Delta = +2260.8$, paired $t = 1.000$, $p = 0.343$ (two-sided, not statistically significant at $\alpha = 0.05$).
+  * `AgenticTKAN_VoI` vs `AgenticMLP_VoI`: Mean paired difference $\Delta = +14001.6$, paired $t = 3.745$, $p = 0.0046$ (statistically significant at $\alpha = 0.01$).
+  * `AgenticTKAN_VoI` vs `AgenticTKAN_PeriodicP2`: Mean paired difference $\Delta = +6928.7$, paired $t = 3.752$, $p = 0.0045$ (statistically significant at $\alpha = 0.01$).
+  * `AgenticTKAN_VoI` vs `AgenticTKAN_PeriodicP4`: Mean paired difference $\Delta = +11919.9$, paired $t = 4.411$, $p = 0.0017$ (statistically significant at $\alpha = 0.01$).
+  * `AgenticTKAN_VoI` vs `AgenticTKAN_Always`: Mean paired difference $\Delta = +12426.6$, paired $t = 3.528$, $p = 0.0064$ (statistically significant at $\alpha = 0.01$).
 
 ---
 
