@@ -1,0 +1,54 @@
+{
+  "timestamp_utc": "2026-10-25 07:37:22 UTC",
+  "git_commit_hash": "0387a83e7a0b0b6d5e65ada44b78c90e42af901a",
+  "python_version": "3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)]",
+  "pytorch_version": "2.6.0+cu124",
+  "cuda_available": true,
+  "gpu_device": "NVIDIA GeForce RTX 3050 4GB Laptop GPU",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "cpu_processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "evaluation_seeds": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030,
+    2031,
+    2032,
+    2033,
+    2034,
+    2035
+  ],
+  "command": "python scripts/run_final_experiments.py",
+  "models": {
+    "TKAN": {
+      "parameters": 4409,
+      "checkpoint": "outputs/checkpoints/tkan_best.pt"
+    },
+    "GRU": {
+      "parameters": 3681,
+      "checkpoint": "outputs/checkpoints/singlelayergru_best.pt"
+    },
+    "MLP": {
+      "parameters": 2113,
+      "checkpoint": "outputs/checkpoints/smallmlp_best.pt"
+    }
+  },
+  "sla_definitions": {
+    "slice_0_eMBB": {
+      "capacity_bytes": 200000.0,
+      "latency_bound_steps": 4.0,
+      "arrival_mean": 45000.0
+    },
+    "slice_1_URLLC": {
+      "capacity_bytes": 20000.0,
+      "latency_bound_steps": 1.5,
+      "arrival_mean": 3000.0
+    },
+    "slice_2_MIoT": {
+      "capacity_bytes": 10000.0,
+      "latency_bound_steps": 8.0,
+      "arrival_mean": 800.0
+    }
+  }
+}

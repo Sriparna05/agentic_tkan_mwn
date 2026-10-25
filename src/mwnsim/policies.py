@@ -82,6 +82,27 @@ class BaseControlPolicy(ABC):
         pass
 
 
+class EqualAllocationPolicy(BaseControlPolicy):
+    """
+    Policy 0: Static equal PRB allocation ([5, 5, 5]) with zero telemetry requests (open-loop static baseline).
+    """
+
+    def __init__(self, total_prbs: int = 15, num_slices: int = 3):
+        super().__init__("EqualAllocation")
+        self.total_prbs = total_prbs
+        self.num_slices = num_slices
+        self.static_alloc = np.full(num_slices, total_prbs // num_slices, dtype=np.int32)
+        rem = total_prbs % num_slices
+        for i in range(rem):
+            self.static_alloc[i] += 1
+
+    def select_action(
+        self, obs: Dict[str, np.ndarray], info: Optional[Dict[str, Any]] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        telemetry_mask = np.zeros(self.num_slices, dtype=np.int32)
+        return telemetry_mask, self.static_alloc.copy()
+
+
 class EqualPeriodicPolicy(BaseControlPolicy):
     """
     Policy 1: Static equal PRB allocation ([5, 5, 5]) with periodic telemetry polling.

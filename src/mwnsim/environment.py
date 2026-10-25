@@ -16,6 +16,7 @@ Maintains strict separation between:
 from typing import Dict, Any, Tuple, List, Optional
 import os
 import yaml
+import copy
 import numpy as np
 
 
@@ -25,19 +26,27 @@ class WirelessSlicingEnv:
     Transparent, deterministic-by-seed, and strictly leakage-safe.
     """
 
-    def __init__(self, config_path: Optional[str] = None, seed: Optional[int] = None):
-        # Default fallback config if no path provided
-        default_config_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "configs", "simulator.yaml"
-        )
-        path_to_use = config_path if config_path is not None else default_config_path
-
-        if os.path.exists(path_to_use):
-            with open(path_to_use, "r") as f:
-                self.cfg = yaml.safe_load(f)
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        seed: Optional[int] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ):
+        if config is not None:
+            self.cfg = copy.deepcopy(config)
         else:
-            # Inline fallback defaults
-            self.cfg = {
+            # Default fallback config if no path provided
+            default_config_path = os.path.join(
+                os.path.dirname(__file__), "..", "..", "configs", "simulator.yaml"
+            )
+            path_to_use = config_path if config_path is not None else default_config_path
+
+            if os.path.exists(path_to_use):
+                with open(path_to_use, "r") as f:
+                    self.cfg = yaml.safe_load(f)
+            else:
+                # Inline fallback defaults
+                self.cfg = {
                 "time": {"step_duration_ms": 250.0, "max_steps": 100, "random_seed": 2026},
                 "prb_budget": {"total_prbs": 15, "num_slices": 3, "min_prbs_per_slice": [1, 1, 1]},
                 "slices": [

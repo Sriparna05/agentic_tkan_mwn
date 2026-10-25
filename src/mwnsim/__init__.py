@@ -5,6 +5,7 @@ MWNSim: Mobile Wireless Network Simulation Package for O-RAN Slicing & Telemetry
 from .environment import WirelessSlicingEnv
 from .policies import (
     BaseControlPolicy,
+    EqualAllocationPolicy,
     EqualPeriodicPolicy,
     QueueAwarePeriodicPolicy,
     QueueAwareAgeTriggeredPolicy,
@@ -22,6 +23,7 @@ __all__ = [
     "WirelessSlicingEnv",
     "MobileWirelessEnv",
     "BaseControlPolicy",
+    "EqualAllocationPolicy",
     "EqualPeriodicPolicy",
     "QueueAwarePeriodicPolicy",
     "QueueAwareAgeTriggeredPolicy",

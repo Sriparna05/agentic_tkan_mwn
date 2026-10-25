@@ -1,0 +1,39 @@
+# Phase 9.1 — Final Experiments Configuration
+experiment_name: "phase9_final_evaluation"
+version: "1.0.0"
+date: "2026-10-25"
+
+seeds:
+  tuning_seeds: [101, 102, 103, 104, 105]
+  evaluation_seeds: [2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035]
+
+environment:
+  num_slices: 3
+  total_prbs: 15
+  episode_steps: 100
+  slot_duration: 0.25
+  default_report_delay: 1
+  default_report_loss_rate: 0.10
+  slice_capacities: [200000.0, 20000.0, 10000.0]  # Bytes
+  slice_delay_targets: [0.100, 0.010, 0.500]      # Seconds
+
+sensitivity:
+  delays: [1, 2, 4]
+  loss_rates: [0.0, 0.10, 0.20, 0.30]
+  burst_multipliers: [0.8, 1.0, 1.5, 2.0]
+  queue_capacities: [50000.0, 100000.0, 200000.0]
+  voi_thresholds: [0.2, 0.5, 1.0, 2.0]
+
+hardware:
+  device: "cuda"
+  target_gpu: "NVIDIA GeForce RTX 3050 4GB Laptop GPU"
+  near_rt_ric_envelope_ms: 10.0
+
+output_paths:
+  raw_results: "outputs/metrics/final_experiments_raw.csv"
+  final_results: "outputs/metrics/final_results.csv"
+  ablation_results: "outputs/metrics/ablation_results.csv"
+  sensitivity_results: "outputs/metrics/sensitivity_results.csv"
+  figures_dir: "outputs/figures"
+  manifest_path: "outputs/manifests/final_experiments_manifest.json"
+  report_path: "reports/experiments/final_results.md"
