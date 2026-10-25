@@ -1,0 +1,34 @@
+# configs/agentic_controller.yaml
+# Phase 8.1 — Agentic Temporal KAN Closed-Loop Controller Configuration
+
+protocol_version: "1.0.0"
+phase: "8.1"
+description: "Hybrid closed-loop controller combining temporal KAN prediction, Value of Information (VoI) telemetry acquisition, and constrained PRB slicing"
+
+architecture:
+  model_type: "tkan"          # Options: "tkan", "gru", "mlp", "none"
+  checkpoint_paths:
+    tkan: "outputs/checkpoints/tkan_best.pt"
+    gru: "outputs/checkpoints/singlelayergru_best.pt"
+    mlp: "outputs/checkpoints/smallmlp_best.pt"
+  lookback: 16                # Temporal memory history length
+  in_features: 4              # [buffer, tx_brate, sum_requested_prbs, sum_granted_prbs]
+  hidden_dim: 32
+
+acquisition:
+  telemetry_mode: "voi"       # Options: "voi", "periodic", "age", "uncertainty", "always", "never"
+  voi_threshold: 1.0          # Value of Information decision threshold: VoI_k / cost_k >= threshold
+  periodic_interval: 2        # Used when telemetry_mode == "periodic"
+  age_threshold: 3            # Used when telemetry_mode == "age"
+  uncertainty_threshold: 0.15 # Used when telemetry_mode == "uncertainty"
+
+allocation:
+  total_prbs: 15
+  num_slices: 3
+  min_prbs_per_slice: [1, 1, 1]
+  risk_margin_factor: 0.5     # Weight on predictive uncertainty in allocation demand
+
+evaluation:
+  random_seeds: [2026, 2027, 2028, 2029, 2030]
+  episode_steps: 100
+  log_detailed_traces: true

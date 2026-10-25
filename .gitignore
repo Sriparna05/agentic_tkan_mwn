@@ -14,6 +14,7 @@ data/raw/
 data/interim/
 data/processed/*.npz
 data/processed/*.parquet
+data/processed/*.csv
 data/processed/commag/*.npz
 outputs/checkpoints/*.pt
 outputs/checkpoints/*.pth

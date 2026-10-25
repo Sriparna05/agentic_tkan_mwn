@@ -11,8 +11,9 @@ from .policies import (
     QueueAwareUncertaintyPolicy,
     DecisionSensitivePolicy,
     PrivilegedFullInfoPolicy,
-    allocate_integer_prbs
+    allocate_integer_prbs,
 )
+from .agentic_controller import AgenticTKANController
 
 # Backward-compatible alias
 MobileWirelessEnv = WirelessSlicingEnv
@@ -27,5 +28,6 @@ __all__ = [
     "QueueAwareUncertaintyPolicy",
     "DecisionSensitivePolicy",
     "PrivilegedFullInfoPolicy",
-    "allocate_integer_prbs"
+    "AgenticTKANController",
+    "allocate_integer_prbs",
 ]
