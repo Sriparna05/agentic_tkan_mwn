@@ -66,19 +66,45 @@ def plot_fig1_pareto():
             label=name if name in colors or "Periodic" in name or "Always" in name else None
         )
 
-        # Label key points
-        if name in ["AgenticTKAN_VoI", "AgenticGRU_VoI", "AgenticMLP_VoI", "NoMemory_VoI", "DecisionSensitive", "PrivilegedFullInfo_Oracle"]:
-            offset_y = 2.0 if "MLP" not in name else -3.0
-            ax.annotate(name, (x, y), textcoords="offset points", xytext=(6, offset_y), fontsize=8, fontweight="bold" if "TKAN" in name else "normal")
+        # Label key points with tailored non-overlapping offsets
+        offsets = {
+            "AgenticTKAN_VoI": (10, -10),
+            "AgenticGRU_VoI": (10, 10),
+            "NoMemory_VoI": (12, 12),
+            "DecisionSensitive": (10, -10),
+            "PrivilegedFullInfo_Oracle": (10, -15),
+            "AgenticMLP_VoI": (10, 8),
+        }
+        if name in offsets:
+            ox, oy = offsets[name]
+            ax.annotate(
+                name,
+                (x, y),
+                textcoords="offset points",
+                xytext=(ox, oy),
+                fontsize=8.5,
+                fontweight="bold" if "TKAN" in name else "normal",
+                bbox=dict(boxstyle="round,pad=0.18", fc="white", ec="#bbbbbb", lw=0.6, alpha=0.85),
+            )
 
-    ax.set_xlabel("Telemetry Request Rate (%)")
-    ax.set_ylabel("SLA Violation Rate (%)")
-    ax.set_title("Pareto Trade-Off: QoS Compliance vs. Telemetry Overhead")
+    ax.set_xlabel("Telemetry Request Rate (%)", fontsize=11)
+    ax.set_ylabel("SLA Violation Rate (%)", fontsize=11)
+    ax.set_title("Pareto Trade-Off: QoS Compliance vs. Telemetry Overhead", fontsize=12, pad=10)
+    ax.set_xlim(-4, 105)
+    ax.set_ylim(8, 88)
     ax.grid(True, linestyle="--", alpha=0.6)
 
     # Invert desired direction: ideal is bottom-left (low telemetry, low SLA violations)
-    ax.annotate("Ideal Direction\n(Efficient & Compliant)", xy=(5, 25), xytext=(20, 15),
-                arrowprops=dict(arrowstyle="->", color="green", lw=1.5), fontsize=8, color="green")
+    ax.annotate(
+        "Ideal Direction\n(Low Overhead & High Compliance)",
+        xy=(1.5, 12),
+        xytext=(38, 13),
+        arrowprops=dict(arrowstyle="->", color="green", lw=1.8),
+        fontsize=9.0,
+        color="green",
+        fontweight="bold",
+        bbox=dict(boxstyle="round,pad=0.2", fc="#f0fff0", ec="green", lw=0.8, alpha=0.9),
+    )
 
     plt.tight_layout()
     fig_path = os.path.join(FIG_DIR, "fig1_pareto_constraint_vs_telemetry.png")
@@ -93,26 +119,34 @@ def plot_fig2_architecture_ablation():
     models = ["AgenticTKAN_VoI", "AgenticGRU_VoI", "AgenticMLP_VoI", "NoMemory_VoI"]
     df_sub = df[df["policy"].isin(models)].set_index("policy").reindex(models)
 
-    labels = ["TKAN\n(Proposed)", "GRU\n(Recurrent)", "MLP\n(Feedforward)", "No-Memory\n(Persistence)"]
+    # Clean, concise labels with no horizontal overlap
+    labels = ["TKAN\n(Proposed)", "GRU\n(Recurrent)", "MLP\n(Feedfwd)", "No-Memory\n(Myopic)"]
     x = np.arange(len(labels))
-    width = 0.28
+    width = 0.30
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4.2))
+    # Spacious figure size (10.5 x 4.8)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 4.8))
 
     # Left: Total Mean Reward
     rewards = df_sub["total_reward_mean"].to_numpy()
     rewards_err = df_sub["total_reward_ci95"].to_numpy()
-    bars1 = ax1.bar(x, rewards, width=0.5, yerr=rewards_err, capsize=4, color=["#1f77b4", "#ff7f0e", "#d62728", "#2ca02c"], alpha=0.85)
+    bars1 = ax1.bar(
+        x,
+        rewards,
+        width=0.48,
+        yerr=rewards_err,
+        capsize=4.5,
+        color=["#1f77b4", "#ff7f0e", "#d62728", "#2ca02c"],
+        alpha=0.88,
+    )
     ax1.set_xticks(x)
-    ax1.set_xticklabels(labels)
-    ax1.set_ylabel("Total Mean Reward")
-    ax1.set_title("(a) Cumulative Control Reward (Higher is Better)")
+    ax1.set_xticklabels(labels, fontsize=10)
+    ax1.tick_params(axis="x", pad=8)
+    ax1.set_ylabel("Total Mean Reward", fontsize=11)
+    ax1.set_title("(a) Cumulative Control Reward (Higher is Better)", fontsize=12, pad=10)
+    ax1.set_ylim(-32000, 1000)
+    ax1.axhline(0, color="gray", linestyle="-", linewidth=0.8, alpha=0.7)
     ax1.grid(True, linestyle="--", alpha=0.5)
-
-    # Add values on bars
-    for bar in bars1:
-        yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width() / 2, yval - 1200, f"{yval:.0f}", ha="center", va="top", fontsize=8, fontweight="bold")
 
     # Right: SLA Violation & Overflow Frequency
     sla_rates = df_sub["sla_violation_rate_mean"].to_numpy() * 100
@@ -120,13 +154,33 @@ def plot_fig2_architecture_ablation():
     ovf_rates = df_sub["overflow_frequency_mean"].to_numpy() * 100
     ovf_err = df_sub["overflow_frequency_ci95"].to_numpy() * 100
 
-    ax2.bar(x - width/2, sla_rates, width, yerr=sla_err, label="SLA Violation Rate (%)", color="#e377c2", capsize=3, alpha=0.85)
-    ax2.bar(x + width/2, ovf_rates, width, yerr=ovf_err, label="Overflow Frequency (%)", color="#bcbd22", capsize=3, alpha=0.85)
+    ax2.bar(
+        x - width / 2,
+        sla_rates,
+        width,
+        yerr=sla_err,
+        label="SLA Violation Rate (%)",
+        color="#e377c2",
+        capsize=4.0,
+        alpha=0.88,
+    )
+    ax2.bar(
+        x + width / 2,
+        ovf_rates,
+        width,
+        yerr=ovf_err,
+        label="Overflow Frequency (%)",
+        color="#bcbd22",
+        capsize=4.0,
+        alpha=0.88,
+    )
     ax2.set_xticks(x)
-    ax2.set_xticklabels(labels)
-    ax2.set_ylabel("Frequency (%)")
-    ax2.set_title("(b) Constraint Breach Frequencies")
-    ax2.legend(loc="upper left")
+    ax2.set_xticklabels(labels, fontsize=10)
+    ax2.tick_params(axis="x", pad=8)
+    ax2.set_ylabel("Frequency (%)", fontsize=11)
+    ax2.set_title("(b) Constraint Breach Frequencies", fontsize=12, pad=10)
+    ax2.set_ylim(0, 95)
+    ax2.legend(loc="upper left", framealpha=0.95, fontsize=9.5)
     ax2.grid(True, linestyle="--", alpha=0.5)
 
     plt.tight_layout()
