@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
-from models.kan.vanilla_kan import KANLayer
+try:
+    from src.models.kan.vanilla_kan import KANLayer
+except ImportError:
+    from models.kan.vanilla_kan import KANLayer
+
 
 
 class AgenticTKANCell(nn.Module):
@@ -11,18 +15,11 @@ class AgenticTKANCell(nn.Module):
         self.action_dim = 1
         concat_dim = input_dim + self.action_dim + hidden_dim
 
-        # Step 4 & 5: Internal Memory & Context (KAN-based LSTM Gates)
-        self.kan_i = KANLayer(concat_dim, hidden_dim, grid_size=grid_size, k=k)
-        self.kan_f = KANLayer(concat_dim, hidden_dim, grid_size=grid_size, k=k)
-        self.kan_c = KANLayer(concat_dim, hidden_dim, grid_size=grid_size, k=k)
-        self.kan_o = KANLayer(concat_dim, hidden_dim, grid_size=grid_size, k=k)
+        # Fused KAN-based LSTM gates: i, f, c, o (exact same 4x hidden_dim capacity)
+        self.kan_gates = KANLayer(concat_dim, 4 * hidden_dim, grid_size=grid_size, k=k)
 
-        # Step 6: Joint Agentic Heads
-        # Branch A: Internal Decision / Policy Module
-        self.kan_policy = KANLayer(hidden_dim, self.action_dim, grid_size=grid_size, k=k)
-
-        # Branch B: Internal Self-Eval / Critic
-        self.kan_critic = KANLayer(hidden_dim, self.action_dim, grid_size=grid_size, k=k)
+        # Fused Joint Agentic Heads: Branch A (Policy) + Branch B (Critic)
+        self.kan_heads = KANLayer(hidden_dim, 2 * self.action_dim, grid_size=grid_size, k=k)
 
     def init_states(self, batch_size: int, device: torch.device):
         h = torch.zeros(batch_size, self.hidden_dim, device=device)
@@ -37,16 +34,19 @@ class AgenticTKANCell(nn.Module):
         obs = torch.cat([x_t, a_prev, h_prev], dim=-1)
 
         # Step 4 & 5: Internal State & Memory (LSTM logic with KAN layers)
-        i_t = torch.sigmoid(self.kan_i(obs))
-        f_t = torch.sigmoid(self.kan_f(obs))
-        c_cand = torch.tanh(self.kan_c(obs))
+        gates = self.kan_gates(obs)
+        i_raw, f_raw, c_raw, o_raw = torch.split(gates, self.hidden_dim, dim=-1)
+        i_t = torch.sigmoid(i_raw)
+        f_t = torch.sigmoid(f_raw)
+        c_cand = torch.tanh(c_raw)
         c_t = f_t * c_prev + i_t * c_cand
-        o_t = torch.sigmoid(self.kan_o(obs))
+        o_t = torch.sigmoid(o_raw)
         h_t = o_t * torch.tanh(c_t)
 
         # Step 6: Joint Agentic Heads
-        a_cand = self.kan_policy(h_t)
-        conf = torch.sigmoid(self.kan_critic(h_t))
+        heads = self.kan_heads(h_t)
+        a_cand, critic_raw = torch.split(heads, self.action_dim, dim=-1)
+        conf = torch.sigmoid(critic_raw)
 
         # Step 7: Internal Feedback & State Update
         # Modulates the candidate action using the Critic's confidence score

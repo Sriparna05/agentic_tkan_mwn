@@ -9,7 +9,11 @@ import torch.nn as nn
 import math
 
 # Import the core spline mathematics from our Vanilla KAN implementation
-from models.kan.vanilla_kan import KANLayer
+try:
+    from src.models.kan.vanilla_kan import KANLayer
+except ImportError:
+    from models.kan.vanilla_kan import KANLayer
+
 
 
 class TKANCell(nn.Module):

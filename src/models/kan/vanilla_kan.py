@@ -31,6 +31,13 @@ class KANLayer(nn.Module):
         grid = torch.linspace(-1 - k * step, 1 + k * step, num_grid_points).expand(in_dim, -1).clone()
         self.register_buffer('grid', grid)
 
+        # Precompute static knot intervals to eliminate repeated slicing and dynamic allocations
+        for p in range(1, k + 1):
+            self.register_buffer(f'grid_left_{p}', grid[:, :-(p + 1)])
+            self.register_buffer(f'grid_right_{p}', grid[:, p + 1:])
+            self.register_buffer(f'left_den_{p}', grid[:, p:-1] - grid[:, :-(p + 1)])
+            self.register_buffer(f'right_den_{p}', grid[:, p + 1:] - grid[:, 1:-p])
+
         # Spline Coefficients
         self.coef = nn.Parameter(torch.Tensor(out_dim, in_dim, grid_size + k))
         nn.init.normal_(self.coef, mean=0.0, std=noise_scale / (math.sqrt(grid_size)))
@@ -41,21 +48,15 @@ class KANLayer(nn.Module):
 
     def b_splines(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Computes the B-spline basis functions recursively.
+        Computes the B-spline basis functions recursively using precomputed knot grids.
         """
+        grid = self.grid
         x = x.unsqueeze(-1)  # [Batch, in_dim, 1]
-        grid = self.grid     # [in_dim, grid_size + 2k + 1]
         
-        bases = ((x >= grid[:, :-1]) & (x < grid[:, 1:])).float()
+        bases = ((x >= grid[:, :-1]) & (x < grid[:, 1:])).to(x.dtype)
         for p in range(1, self.k + 1):
-            left_num = x - grid[:, :-(p + 1)]
-            left_den = grid[:, p:-1] - grid[:, :-(p + 1)]
-            left = torch.where(left_den == 0, torch.zeros_like(left_num), left_num / left_den)
-            
-            right_num = grid[:, p + 1:] - x
-            right_den = grid[:, p + 1:] - grid[:, 1:-p]
-            right = torch.where(right_den == 0, torch.zeros_like(right_num), right_num / right_den)
-            
+            left = (x - getattr(self, f'grid_left_{p}')) / getattr(self, f'left_den_{p}')
+            right = (getattr(self, f'grid_right_{p}') - x) / getattr(self, f'right_den_{p}')
             bases = left * bases[:, :, :-1] + right * bases[:, :, 1:]
         return bases  # [Batch, in_dim, grid_size + k]
 
